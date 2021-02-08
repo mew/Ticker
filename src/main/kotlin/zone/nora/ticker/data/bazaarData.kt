@@ -1,5 +1,6 @@
 package zone.nora.ticker.data
 
+import com.google.gson.GsonBuilder
 import net.hypixel.api.HypixelAPI
 import net.hypixel.api.reply.skyblock.BazaarReply
 import zone.nora.ticker.config.TickerConfig
@@ -7,6 +8,8 @@ import kotlin.math.absoluteValue
 
 // bazaar data on game launch
 var baseBazaarData: Map<String, BazaarReply.Product> = emptyMap()
+
+val gson = GsonBuilder().setPrettyPrinting().create()
 
 fun getBazaarData(): Map<String, BazaarReply.Product> {
     val api = HypixelAPI(null)
@@ -37,12 +40,13 @@ fun BazaarReply.Product.Status.compareWith(base: BazaarReply.Product.Status, typ
     val percent = diff.absoluteValue / basePrice
     val percentStr = if (TickerConfig.showPercents) " (${if (state == State.INCREASE) '+' else '-'}${percent.format()}%)" else ""
 
-    return "$productId ${getArrow(percent, state)} ${diff.format()}$percentStr"
+    return "$productId ${getArrow(percent, state)} ${diff.format(true)}$percentStr"
 }
 
-fun Double.format(): Double {
-    val d = String.format("%.3f", this).toDouble()
-    return if (d == 0.000) 0.001 else d
+fun Double.format(prefix: Boolean = false): String {
+    val d = String.format("%.3f", this)
+    val p = if (prefix && this > 0) "+" else ""
+    return if (d == "0.000") "${p}0.001" else if (d == "-0.000") "-0.001" else "$p$d"
 }
 
 private fun getArrow(percent: Double, state: State): String {

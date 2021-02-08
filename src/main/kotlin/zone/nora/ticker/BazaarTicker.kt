@@ -1,11 +1,11 @@
 package zone.nora.ticker
 
+import com.google.gson.JsonObject
 import net.minecraftforge.fml.common.Mod
 import net.minecraftforge.fml.common.Mod.EventHandler
 import net.minecraftforge.fml.common.event.FMLInitializationEvent
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent
 import net.modcore.api.ModCoreAPI
-import net.modcore.api.utils.Multithreading
 import zone.nora.ticker.command.TickerCommand
 import zone.nora.ticker.config.TickerConfig
 import zone.nora.ticker.data.baseBazaarData
@@ -21,18 +21,21 @@ import zone.nora.ticker.hud.type.TickerHudElementType
 ) object BazaarTicker {
     @EventHandler
     fun onPreInit(event: FMLPreInitializationEvent) {
-        Multithreading.runAsync(Runnable { baseBazaarData = getBazaarData() })
-
-        TickerConfig.initialize()
+        TickerConfig.initData()
+        baseBazaarData = getBazaarData()
+        baseBazaarData.keys.forEach {
+            if (!TickerConfig.localDataObject.has(it)) {
+                val obj = JsonObject()
+                obj.addProperty("alias", "")
+                obj.addProperty("shown", true)
+                TickerConfig.localDataObject.add(it, obj)
+            }
+        }
     }
 
     @EventHandler
     fun onInit(event: FMLInitializationEvent) {
-        ModCoreAPI.getCommandRegistry().apply {
-            registerCommand(TickerCommand())
-        }
-        ModCoreAPI.getHudRegistry().apply {
-            registerElement(TickerHudElementType)
-        }
+        ModCoreAPI.getCommandRegistry().registerCommand(TickerCommand())
+        ModCoreAPI.getHudRegistry().registerElement(TickerHudElementType)
     }
 }

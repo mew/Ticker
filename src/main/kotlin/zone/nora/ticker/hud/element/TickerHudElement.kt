@@ -44,8 +44,10 @@ class TickerHudElement : HudElement(TickerHudElementType) {
             val pid = product.productId
             val baseStatus = (baseBazaarData[pid] ?: continue).quickStatus
             val qs = product.quickStatus
-            buy += "${qs.compareWith(baseStatus, Comparison.BUY)}   "
-            sell += "${qs.compareWith(baseStatus, Comparison.SELL)}   "
+            val b = qs.compareWith(baseStatus, Comparison.BUY)
+            val s = qs.compareWith(baseStatus, Comparison.SELL)
+            if (b.isNotEmpty() && b.isNotBlank()) buy += "${qs.compareWith(baseStatus, Comparison.BUY)}   "
+            if (s.isNotEmpty() && s.isNotBlank()) sell += "${qs.compareWith(baseStatus, Comparison.SELL)}   "
         }
 
         UIText("Buy:").bindShadow(TickerConfig.textShadowState).constrain {

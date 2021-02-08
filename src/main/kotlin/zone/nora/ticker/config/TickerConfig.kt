@@ -4,9 +4,13 @@ import club.sk1er.elementa.state.BasicState
 import club.sk1er.vigilance.Vigilant
 import club.sk1er.vigilance.data.Property
 import club.sk1er.vigilance.data.PropertyType
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import zone.nora.ticker.data.gson
 import java.io.File
+import kotlin.concurrent.fixedRateTimer
 
-object TickerConfig : Vigilant(File("./config/ticker.toml")) {
+object TickerConfig : Vigilant(File("./ticker/ticker.toml")) {
     //@Property(
     //    type = PropertyType.TEXT,
     //    name = "Hypixel API Key",
@@ -49,9 +53,32 @@ object TickerConfig : Vigilant(File("./config/ticker.toml")) {
 
     val textShadowState = BasicState(textShadow)
 
+    private val dataFile: File = File("./ticker/bazaar_items.json")
+
     init {
+        initialize()
+
         registerListener(::textShadow, {
             textShadowState.set(it)
         })
+    }
+
+    var localDataObject: JsonObject = JsonObject()
+
+    fun initData() {
+        var content = "{}"
+        if (dataFile.exists()) {
+            content = dataFile.readText()
+        } else {
+            dataFile.createNewFile()
+        }
+        localDataObject = try {
+            JsonParser().parse(content).asJsonObject
+        } catch (e: Exception) {
+            e.printStackTrace()
+            JsonObject()
+        }
+
+        fixedRateTimer(period = 30 * 1000) { dataFile.writeText(gson.toJson(localDataObject)) }
     }
 }
